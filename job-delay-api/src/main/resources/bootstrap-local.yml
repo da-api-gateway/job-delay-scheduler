@@ -1,0 +1,32 @@
+spring:
+  cloud:
+    nacos:
+      # Nacos 服务器配置
+      server-addr: localhost:8848
+      # 认证配置（如果 Nacos 开启认证）
+      # username: nacos
+      # password: nacos
+
+      config:
+        server-addr: localhost:8848
+        namespace: public
+        group: DEFAULT_GROUP
+        file-extension: yaml
+        # Nacos 2025.0.0.0 推荐使用 refreshEnabled
+        refresh-enabled: true
+
+      discovery:
+        server-addr: localhost:8848
+        namespace: public
+        group: DEFAULT_GROUP
+        register-enabled: true
+
+  config:
+    import:
+      - nacos:job-delay-scheduler.yaml?group=DEFAULT_GROUP
+
+# logging:
+#   level:
+    # com.alibaba.nacos: DEBUG
+    # com.alibaba.cloud: DEBUG
+    # org.springframework.cloud: DEBUG

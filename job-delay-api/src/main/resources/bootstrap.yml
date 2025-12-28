@@ -1,0 +1,7 @@
+spring:
+  application:
+    name: job-delay-scheduler
+
+  profiles:
+    active: local
+

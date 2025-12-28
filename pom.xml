@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+         https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <!-- 引用框架作为 parent -->
+    <parent>
+        <groupId>com.cjlabs</groupId>
+        <artifactId>cj-fmk-spring-boot3-starter</artifactId>
+        <version>20251117_v1</version>
+        <relativePath/> <!-- 从仓库中查找而不是本地 -->
+    </parent>
+
+    <artifactId>job-delay-scheduler</artifactId>
+    <version>20251228_v1</version>
+    <packaging>pom</packaging>
+
+    <name>Job Delay Scheduler</name>
+    <description>Job Delay Scheduler based on cj-fmk-spring-boot3-starter</description>
+
+    <modules>
+        <module>job-delay-api</module>
+    </modules>
+
+    <dependencyManagement>
+        <dependencies>
+            <!-- 根据需要添加框架提供的依赖 -->
+            <dependency>
+                <groupId>com.cjlabs</groupId>
+                <artifactId>fmk-boot</artifactId>
+                <version>${fmk-boot.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.cjlabs</groupId>
+                <artifactId>fmk-core</artifactId>
+                <version>${fmk-core.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.cjlabs</groupId>
+                <artifactId>fmk-db</artifactId>
+                <version>${fmk-db.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.cjlabs</groupId>
+                <artifactId>fmk-cloud</artifactId>
+                <version>${fmk-cloud.version}</version>
+            </dependency>
+
+        </dependencies>
+    </dependencyManagement>
+</project>
