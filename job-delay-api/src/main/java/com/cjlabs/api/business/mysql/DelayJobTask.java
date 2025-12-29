@@ -7,18 +7,25 @@ import com.cjlabs.api.business.enums.TaskStatusEnum;
 import com.cjlabs.api.business.enums.TaskTypeEnum;
 import com.cjlabs.db.domain.FmkBaseEntity;
 
+import com.cjlabs.web.json.FmkJacksonUtil;
+import com.fasterxml.jackson.core.type.TypeReference;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 import java.time.Instant;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * delay_job_task 延迟任务配置表
  * <p>
  * 2025-12-28 10:32:02
  */
+@Slf4j
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -106,5 +113,36 @@ public class DelayJobTask extends FmkBaseEntity {
      */
     private String mqHeaders;
 
+    /**
+     * 解析 HTTP 请求头
+     */
+    public Map<String, String> parseHttpHeaders() {
+        if (httpHeaders == null || httpHeaders.isEmpty()) {
+            return new HashMap<>();
+        }
+        try {
+            return FmkJacksonUtil.parseObj(httpHeaders, new TypeReference<>() {
+            });
+        } catch (Exception e) {
+            log.warn("Failed to parse HTTP headers for task {}", this.getId(), e);
+            return new HashMap<>();
+        }
+    }
+
+    /**
+     * 解析 Kafka 消息头
+     */
+    public Map<String, String> parseMqHeaders() {
+        if (mqHeaders == null || mqHeaders.isEmpty()) {
+            return new HashMap<>();
+        }
+        try {
+            return FmkJacksonUtil.parseObj(mqHeaders, new TypeReference<>() {
+            });
+        } catch (Exception e) {
+            log.warn("Failed to parse MQ headers for task {}", this.getId(), e);
+            return new HashMap<>();
+        }
+    }
 
 }

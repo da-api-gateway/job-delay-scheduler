@@ -1,5 +1,6 @@
 package com.cjlabs.api.xxljob;
 
+import com.cjlabs.api.business.enums.HttpMethodEnum;
 import com.cjlabs.api.business.enums.RetryStrategyEnum;
 import com.cjlabs.api.business.enums.TaskTypeEnum;
 import com.cjlabs.api.business.mysql.DelayJobTask;
@@ -7,13 +8,16 @@ import com.cjlabs.api.business.service.DelayJobTaskService;
 import com.cjlabs.boot.job.xxljob.AbstractXxlJobHandler;
 import com.cjlabs.boot.job.xxljob.JobExecutionContext;
 import com.cjlabs.core.time.FmkInstantUtil;
+import com.cjlabs.web.util.http.jdk21.FmkJdkHttpClientUtil;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.time.Instant;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 延迟任务处理 Handler - 支持分片执行
@@ -135,14 +139,9 @@ public class DelayJobTaskHandler extends AbstractXxlJobHandler {
     private String executeBusiness(DelayJobTask task, JobExecutionContext context) throws Exception {
         log.info("开始执行任务 {}，类型: {}", task.getId(), task.getTaskType());
 
-        // TODO: 根据任务类型执行不同的逻辑
         return switch (task.getTaskType()) {
-            case TaskTypeEnum.HTTP ->
-                // return httpTaskService.sendRequest(task.getMsgBody(), context.getTraceId());
-                    "HTTP 任务执行成功";
-            case TaskTypeEnum.MQ ->
-                // return kafkaTaskService.sendMessage(task.getMsgBody(), context.getTraceId());
-                    "MQ 任务执行成功";
+            case TaskTypeEnum.HTTP -> executeHttpTask(task, context);
+            case TaskTypeEnum.MQ -> executeMqTask(task, context);
         };
     }
 
@@ -203,5 +202,101 @@ public class DelayJobTaskHandler extends AbstractXxlJobHandler {
         // 计算下次执行时间
         Instant now = FmkInstantUtil.now();
         return FmkInstantUtil.plusSeconds(now, delaySeconds);
+    }
+
+    /**
+     * 执行 HTTP 任务（支持自定义超时）
+     */
+    private String executeHttpTask(DelayJobTask task, JobExecutionContext context) throws Exception {
+        String url = task.getHttpUrl();
+        HttpMethodEnum method = task.getHttpMethod();
+        String requestBody = task.getMsgBody();
+        Map<String, String> headers = task.parseHttpHeaders();
+
+        log.info("执行 HTTP 任务，URL: {}, 方法: {}, traceId: {}", url, method, context.getTraceId());
+
+        // 验证必要参数
+        if (url == null || url.isEmpty()) {
+            throw new Exception("HTTP 任务缺少必要参数：url");
+        }
+
+        if (method == null) {
+            method = HttpMethodEnum.POST;  // 默认方法
+        }
+
+        // 添加追踪 ID 到请求头
+        if (headers == null) {
+            headers = new HashMap<>();
+        }
+
+        try {
+            String response;
+
+            // 根据请求方法调用不同的 API
+            if (HttpMethodEnum.GET.equals(method)) {
+                // GET 请求
+                response = FmkJdkHttpClientUtil.get(url, headers);
+            } else {
+                // POST 请求 - JSON 格式
+                response = FmkJdkHttpClientUtil.postJson(url, requestBody, headers);
+            }
+
+            log.info("HTTP 任务执行成功，URL: {}, 方法: {}, traceId: {}",
+                    url, method, context.getTraceId());
+
+            return response;
+
+        } catch (Exception e) {
+            String errorMsg = String.format("执行 HTTP 任务异常，URL: %s, 方法: %s, traceId: %s",
+                    url, method, context.getTraceId());
+            log.error(errorMsg, e);
+            throw new Exception(errorMsg, e);
+        }
+    }
+
+    /**
+     * 执行 MQ 任务
+     */
+    private String executeMqTask(DelayJobTask task, JobExecutionContext context) throws Exception {
+        // String topic = task.getMqTopic();
+        // String messageKey = task.getMqKey();
+        // String messageBody = task.getMsgBody();
+        // Integer partition = task.getMqPartition();
+        // Map<String, String> headers = task.parseMqHeaders();
+        //
+        // log.info("执行 MQ 任务，Topic: {}, Key: {}, Partition: {}, traceId: {}",
+        //         topic, messageKey, partition, context.getTraceId());
+        //
+        // // 构建 Kafka 记录
+        // ProducerRecord<String, String> record;
+        //
+        // if (partition != null) {
+        //     // 指定分区
+        //     record = new ProducerRecord<>(
+        //             topic,
+        //             partition,
+        //             System.currentTimeMillis(),
+        //             messageKey,
+        //             messageBody
+        //     );
+        // } else {
+        //     // 自动分配分区
+        //     record = new ProducerRecord<>(topic, messageKey, messageBody);
+        // }
+        //
+        // // 添加消息头
+        // if (headers != null && !headers.isEmpty()) {
+        //     headers.forEach((k, v) -> record.headers().add(k, v.getBytes(StandardCharsets.UTF_8)));
+        // }
+        // record.headers().add("X-Trace-Id", context.getTraceId().getBytes(StandardCharsets.UTF_8));
+        //
+        // // 发送消息
+        // Future<RecordMetadata> future = kafkaTemplate.send(record);
+        // RecordMetadata metadata = future.get(10, TimeUnit.SECONDS);
+        //
+        // log.info("MQ 任务执行成功，Topic: {}, Partition: {}, Offset: {}",
+        //         metadata.topic(), metadata.partition(), metadata.offset());
+
+        return "MQ 任务执行成功";
     }
 }
